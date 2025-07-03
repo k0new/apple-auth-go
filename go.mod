@@ -1,4 +1,4 @@
-module github.com/GianOrtiz/apple-auth-go
+module github.com/k0new/apple-auth-go
 
 go 1.15
 
