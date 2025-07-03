@@ -22,7 +22,7 @@ type AppleUser struct {
 	// UID Apple unique identification for the user.
 	UID string `json:"uid"`
 
-	// TransferUID Apple unique transfer identification for the user.
+	// TransferUID Apple unique transfer identification for the user(transfer_sub).
 	TransferUID string `json:"transfer_uid"`
 
 	// Email Apple user email.
