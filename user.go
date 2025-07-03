@@ -22,6 +22,9 @@ type AppleUser struct {
 	// UID Apple unique identification for the user.
 	UID string `json:"uid"`
 
+	// TransferUID Apple unique transfer identification for the user.
+	TransferUID string `json:"transfer_uid"`
+
 	// Email Apple user email.
 	Email string `json:"email"`
 
@@ -47,6 +50,10 @@ func GetUserInfoFromIDToken(idToken string) (*AppleUser, error) {
 	claims := token.Claims()
 	if sub, ok := claims["sub"].(string); ok {
 		u.UID = sub
+	}
+
+	if transferSub, ok := claims["transfer_sub"].(string); ok {
+		u.TransferUID = transferSub
 	}
 
 	if email, ok := claims["email"].(string); ok {
