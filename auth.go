@@ -36,6 +36,9 @@ type AppleAuth interface {
 	// ValidateRefreshToken validates a refresh token returning refresh token, access
 	// token and token id.
 	ValidateRefreshToken(refreshToken string) (*TokenResponse, error)
+
+	// GetOriginalSubFromTransferSub returns old team sub from transfer_sub
+	GetOriginalSubFromTransferSub(transferSub string) (string, error)
 }
 
 type appleErrorResponseBody struct {
