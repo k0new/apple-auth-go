@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	migrationEndpoint  = "https://appleid.apple.com/auth/usermigrationinfo"
 	validationEndpoint = "https://appleid.apple.com/auth/token"
 	appleAudience      = "https://appleid.apple.com"
 )
@@ -204,4 +205,55 @@ func (a *appleAuth) validateRequest(formQuery url.Values) (*TokenResponse, error
 		return nil, err
 	}
 	return &tokenResponse, nil
+}
+
+func (a *appleAuth) GetOriginalSubFromTransferSub(transferSub string) (string, error) {
+	clientSecret, err := a.clientSecret()
+	if err != nil {
+		return "", fmt.Errorf("generating client secret: %w", err)
+	}
+
+	form := url.Values{}
+	form.Set("transfer_sub", transferSub)
+	form.Set("client_id", a.AppID)
+	form.Set("client_secret", clientSecret)
+
+	res, err := a.httpClient.PostForm(migrationEndpoint, form)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		var errorResponseBody appleErrorResponseBody
+		if err := json.NewDecoder(res.Body).Decode(&errorResponseBody); err != nil {
+			return "", err
+		}
+		switch errorResponseBody.Error {
+		case string(ErrorResponseTypeInvalidScope):
+			return "", ErrorResponseInvalidScope
+		case string(ErrorResponseTypeUnsupportedGrantType):
+			return "", ErrorResponseUnsupportedGrantType
+		case string(ErrorResponseTypeUnauthorizedClient):
+			return "", ErrorResponseUnauthorizedClient
+		case string(ErrorResponseTypeInvalidGrant):
+			return "", ErrorResponseInvalidGrant
+		case string(ErrorResponseTypeInvalidClient):
+			return "", ErrorResponseInvalidClient
+		case string(ErrorResponseTypeInvalidRequest):
+			return "", ErrorResponseInvalidRequest
+		default:
+			return "", fmt.Errorf("unrecognized response error: %s", errorResponseBody.Error)
+		}
+	}
+	var result struct {
+		Sub string `json:"sub"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	return result.Sub, nil
 }
